@@ -29,9 +29,11 @@ Our boss is evil and we can only have docker and docker-compose on our machines.
 
 # Build
 
-`docker run --rm -u gradle -v "$PWD":/home/gradle/project -w /home/gradle/project gradle:5.6.2-jdk12 gradle build --build-cache --info`
+## Build JAR
+`docker run --rm -u gradle -v "$PWD":/home/gradle/project -w /home/gradle/project gradle:5.6.2-jdk12 gradle build`
 
+## Build docker image
 `docker build . -t amazingco`
 
-# RUN
-`docker run --rm -p 8080:8080 amazingco`
+# Deploy
+`docker-compose up -d`
