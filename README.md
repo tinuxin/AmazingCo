@@ -37,3 +37,28 @@ Our boss is evil and we can only have docker and docker-compose on our machines.
 
 # Deploy
 `docker-compose up -d`
+
+# Test
+The two required endpoints are available as:
+## Get all decendants
+`curl -X GET http://localhost:8080/nodes/<ID_OF_PARENT>/decendants`
+
+## Change parent
+`curl -X PATCH -H "Content-Type: application/json" -d '{"parent": "http://localhost:8080/nodes/<ID_OF_NEW_PARENT>"}' http://localhost:8080/nodes/{id}`
+
+## Create tree
+To populate the database one can do the following to create a root
+`curl -X POST -H "Content-Type: application/json" -d '{}' http://localhost:8080/nodes`
+and then
+`curl -X POST -H "Content-Type: application/json" -d '{"parent": "http://localhost:8080/nodes/<ID_OF_PARENT>"}' http://localhost:8080/nodes`
+to add nodes to the tree
+
+## Extra
+To get all nodes
+`curl -X GET http://localhost:8080/nodes`
+
+To get specific node
+`curl -X GET http://localhost:8080/nodes/<NODE_ID>`
+
+To get all nodes of a specific height
+`curl -X GET http://localhost:8080/nodes/height/<HEIGHT>`
