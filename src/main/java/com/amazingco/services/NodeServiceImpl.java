@@ -2,6 +2,7 @@ package com.amazingco.services;
 
 import java.util.List;
 
+import com.amazingco.api.NodeDTO;
 import com.amazingco.persistence.Node;
 import com.amazingco.persistence.NodeRepository;
 
@@ -48,23 +49,32 @@ public class NodeServiceImpl implements NodeService {
         return nodeRepository.findById(nodeId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
-    public Node createNode(Node node) {
-        if (node.getParent() == null) {
+    public Node createNode(NodeDTO nodeDTO) {
+        Node node = new Node();
+        if (nodeDTO.getParentId() == null) {
             node.setRoot(node);
         } else {
-            updateAttributesFromParent(node, node.getParent());
+            try {
+                updateAttributesFromParent(node, getNodeById(nodeDTO.getParentId()));
+            } catch (ResponseStatusException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parent Node with id "+nodeDTO.getParentId()+" not found.");
+            }
         }
 
         return nodeRepository.save(node);
     }
 
-    public Node updateNode(Long nodeId, Node updatedNode) {
+    public Node updateNode(Long nodeId, NodeDTO updatedNode) {
         Node existingNode = getNodeById(nodeId);
         
-        if (updatedNode.getParent() == null) {
+        if (updatedNode.getParentId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parameter 'parent' not found.");
         } else {
-            updateAttributesFromParent(existingNode, updatedNode.getParent());
+            try {
+                updateAttributesFromParent(existingNode, getNodeById(updatedNode.getParentId()));
+            } catch (ResponseStatusException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parent Node with id "+updatedNode.getParentId()+" not found.");
+            }
         }
 
         return nodeRepository.save(existingNode);

@@ -31,10 +31,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.hateoas.EntityLinks;
 import org.springframework.hateoas.Link;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.web.server.ResponseStatusException;
 
 @RunWith(SpringRunner.class)
 @WebMvcTest(NodeController.class)
@@ -101,8 +103,59 @@ public class NodeControllerTest {
                 jsonPath("_links.self.href", is(TestHelper.buildMockedLink(parent.getId()).getHref() + "/decendants")));
     }
 
+    @Test
+    public void updateNode() throws Exception {
+        // Arrange
+        Node root = TestHelper.createNode(0L, null, null, 0);
+        Node parent = TestHelper.createNode(1L, root, root, 1);
+        Node updatedNode = TestHelper.createNode(2L, parent, null, null);
+
+        when(nodeService.updateNode(eq(updatedNode.getId()), any())).thenReturn(updatedNode);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        // Act
+        ResultActions result = mockMvc.perform(
+                patch("/nodes/" + updatedNode.getId())
+                .content(objectMapper.writeValueAsString(TestHelper.createNodeDTO(parent.getId())))
+                .accept("application/hal+json;charset=UTF-8")
+                .contentType("application/hal+json;charset=UTF-8"));
+                // .characterEncoding("utf-8")
+
+        // Assert
+        result.andExpect(status().isOk()).andExpect(content().contentType("application/hal+json;charset=UTF-8"));
+        verifyJsonNode(result, updatedNode, "$");
+        result.andExpect(jsonPath("_links.self.href", is(TestHelper.buildMockedLink(updatedNode.getId()).getHref())));
+    }
+
+    @Test
+    public void updateNode_parentNotFound() throws Exception {
+        // Arrange
+        Node root = TestHelper.createNode(0L, null, null, 0);
+        Node parent = TestHelper.createNode(1L, root, root, 1);
+        Node updatedNode = TestHelper.createNode(2L, parent, null, null);
+
+        when(nodeService.updateNode(eq(updatedNode.getId()), any())).thenThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST));
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        // Act
+        ResultActions result = mockMvc.perform(
+                patch("/nodes/" + updatedNode.getId())
+                .content(objectMapper.writeValueAsString(TestHelper.createNodeDTO(parent.getId())))
+                .accept("application/hal+json;charset=UTF-8")
+                .contentType("application/hal+json;charset=UTF-8"));
+                // .characterEncoding("utf-8")
+
+        // Assert
+        result.andExpect(status().is(400));
+    }
+
     private ResultActions verifyJsonNode(ResultActions result, Node node, String path) throws Exception {
-        return result.andExpect(jsonPath(path + ".height", is(node.getHeight())))
+        return result
+                .andExpect(jsonPath(path + ".height", is(node.getHeight())))
+                .andExpect(jsonPath(path + ".parentId", is(node.getParent().getId().intValue())))
+                .andExpect(jsonPath(path + ".rootId", is(node.getRoot().getId().intValue())))
                 .andExpect(jsonPath(path + "._links.self.href", is(TestHelper.buildMockedLink(node.getId()).getHref())))
                 .andExpect(jsonPath(path + "._links.parent.href",
                         is(TestHelper.buildMockedLink(node.getParent().getId()).getHref())))

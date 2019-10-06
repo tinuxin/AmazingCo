@@ -1,5 +1,6 @@
 package com.amazingco.services;
 
+import com.amazingco.api.NodeDTO;
 import com.amazingco.persistence.Node;
 
 import org.springframework.stereotype.Service;
@@ -15,7 +16,7 @@ public interface NodeService {
 
     Node getNodeById(Long nodeId);
 
-    Node createNode(Node node);
+    Node createNode(NodeDTO node);
 
-    Node updateNode(Long nodeId, Node updatedNode);
+    Node updateNode(Long nodeId, NodeDTO updatedNode);
 }

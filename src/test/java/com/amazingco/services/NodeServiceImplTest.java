@@ -3,7 +3,9 @@ package com.amazingco.services;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.stubbing.Answer;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -20,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.amazingco.TestHelper;
+import com.amazingco.api.NodeDTO;
 import com.amazingco.persistence.Node;
 import com.amazingco.persistence.NodeRepository;
 
@@ -34,23 +37,33 @@ public class NodeServiceImplTest {
     @Mock
     NodeRepository nodeRepository;
 
-    
     NodeServiceImpl nodeService;
 
     @Before
     public void setup() {
         nodeService = new NodeServiceImpl(nodeRepository);
+
+        when(nodeRepository.save(any())).thenAnswer(new Answer<Node>() {
+
+            @Override
+            public Node answer(InvocationOnMock invocation) throws Throwable {
+                Object[] args = invocation.getArguments();
+                Node test = (Node) args[0];
+                return (Node) args[0];
+            }
+        });
     }
 
-    @Test 
+    @Test
     public void getAllDecendants() {
         // Arrange
-        Node root = TestHelper.createMockedNode(0L, null, null, 0);
-        Node parent = TestHelper.createMockedNode(1L, root, root, 1);
-        Node child1 = TestHelper.createMockedNode(2L, parent, root, 2);
-        Node child2 = TestHelper.createMockedNode(3L, parent, root, 2);
+        Node root = TestHelper.createNode(0L, null, null, 0);
+        Node parent = TestHelper.createNode(1L, root, root, 1);
+        Node child1 = TestHelper.createNode(2L, parent, root, 2);
+        Node child2 = TestHelper.createNode(3L, parent, root, 2);
 
-        when(nodeRepository.findAllDecendants(any())).thenReturn(new ArrayList(Arrays.asList(root, parent, child1, child2)));
+        when(nodeRepository.findAllDecendants(any()))
+                .thenReturn(new ArrayList(Arrays.asList(root, parent, child1, child2)));
 
         // Act
         List<Node> result = nodeService.getAllDecendants(1L);
@@ -59,12 +72,12 @@ public class NodeServiceImplTest {
         assertThat(result).containsExactlyInAnyOrder(child1, child2);
     }
 
-    @Test 
+    @Test
     public void getAllDecendants_parentIsRoot() {
         // Arrange
-        Node root = TestHelper.createMockedNode(0L, null, null, 0);
-        Node child1 = TestHelper.createMockedNode(2L, root, root, 2);
-        Node child2 = TestHelper.createMockedNode(3L, root, root, 2);
+        Node root = TestHelper.createNode(0L, null, null, 0);
+        Node child1 = TestHelper.createNode(2L, root, root, 2);
+        Node child2 = TestHelper.createNode(3L, root, root, 2);
 
         when(nodeRepository.findAllDecendants(any())).thenReturn(new ArrayList(Arrays.asList(root, child1, child2)));
 
@@ -75,7 +88,7 @@ public class NodeServiceImplTest {
         assertThat(result).containsExactlyInAnyOrder(child1, child2);
     }
 
-    @Test 
+    @Test
     public void getAllDecendants_noDecendants() {
         // Arrange
         when(nodeRepository.findAllDecendants(any())).thenReturn(Lists.emptyList());
@@ -87,60 +100,59 @@ public class NodeServiceImplTest {
         assertThat(result).isEmpty();
     }
 
-    @Test 
+    @Test
     public void createNode_withParent() {
         // Arrange
-        Node root = TestHelper.createMockedNode(0L, null, null, 0);
-        Node parent = TestHelper.createMockedNode(1L, root, root, 1);
-        Node newNode = TestHelper.createMockedNode(null, parent, null, null);
+        Node root = TestHelper.createNode(0L, null, null, 0);
+        Node parent = TestHelper.createNode(1L, root, root, 1);
 
-        when(nodeRepository.save(newNode)).thenReturn(mock(Node.class));
+        NodeDTO newNode = TestHelper.createNodeDTO(parent.getId());
+
+        when(nodeRepository.findById(parent.getId())).thenReturn(Optional.of(parent));
 
         // Act
-        nodeService.createNode(newNode);
+        Node result = nodeService.createNode(newNode);
 
         // Assert
-        verify(newNode).setHeight(2);
-        verify(newNode).setRoot(root);
-        verify(newNode).setParent(parent);
+        assertThat(result.getHeight()).isEqualTo(2);
+        assertThat(result.getRoot()).isEqualTo(root);
+        assertThat(result.getParent()).isEqualTo(parent);
     }
 
     @Test 
-    public void createNode_noParent() {
+    public void createNode_newRoot() {
         // Arrange
-        Node newNode = TestHelper.createMockedNode(null, null, null, null);
-
-        when(nodeRepository.save(newNode)).thenReturn(mock(Node.class));
+        NodeDTO newNode = TestHelper.createNodeDTO(null);
 
         // Act
-        nodeService.createNode(newNode);
+        Node result = nodeService.createNode(newNode);
 
         // Assert
-        verify(newNode).setRoot(newNode);
-        verify(newNode, never()).setHeight(anyInt());
-        verify(newNode, never()).setParent(any());
+        assertThat(result.getHeight()).isEqualTo(0);
+        assertThat(result.getRoot()).isEqualTo(result);
+        assertThat(result.getParent()).isEqualTo(null);
     }
 
     @Test 
     public void updateNode_newParent() {
         // Arrange
-        Node root = TestHelper.createMockedNode(0L, null, null, 0);
-        Node parent1 = TestHelper.createMockedNode(1L, root, root, 1);
-        Node parent2 = TestHelper.createMockedNode(2L, root, root, 2);
-        Node existingNode = TestHelper.createMockedNode(3L, parent1, root, 2);
+        Node root = TestHelper.createNode(0L, null, null, 0);
+        Node parent1 = TestHelper.createNode(1L, root, root, 1);
+        Node parent2 = TestHelper.createNode(2L, root, root, 2);
+        Node existingNode = TestHelper.createNode(3L, parent1, root, 2);
 
-        Node updatedNode = TestHelper.createMockedNode(null, parent2, null, null);
+        NodeDTO updatedNode = TestHelper.createNodeDTO(parent2.getId());
 
-        when(nodeRepository.findById(any())).thenReturn(Optional.of(existingNode));
-        when(nodeRepository.save(any())).thenReturn(mock(Node.class));
+        when(nodeRepository.findById(parent2.getId())).thenReturn(Optional.of(parent2));
+        when(nodeRepository.findById(existingNode.getId())).thenReturn(Optional.of(existingNode));
 
         // Act
-        nodeService.updateNode(updatedNode.getId(), updatedNode);
+        Node result = nodeService.updateNode(3L, updatedNode);
 
         // Assert
-        verify(existingNode).setRoot(root);
-        verify(existingNode).setHeight(3);
-        verify(existingNode).setParent(parent2);
+        assertThat(result.getHeight()).isEqualTo(3);
+        assertThat(result.getRoot()).isEqualTo(root);
+        assertThat(result.getParent()).isEqualTo(parent2);
     }
 
     @Test 
@@ -151,12 +163,13 @@ public class NodeServiceImplTest {
         // Act
         Exception exception = null;
         try {
-            nodeService.updateNode(0L, mock(Node.class));
+            nodeService.updateNode(0L, mock(NodeDTO.class));
         } catch (Exception e) {
             exception = e;
         }
 
         // Assert
+        
         assertThat(exception).isNotNull();
         assertThat(exception).isInstanceOf(ResponseStatusException.class);
         assertThat(((ResponseStatusException) exception).getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -165,16 +178,42 @@ public class NodeServiceImplTest {
     }
 
     @Test 
-    public void updateNode_parentNotFound() {
+    public void updateNode_noParent() {
         // Arrange
-        Node updatedNode = TestHelper.createMockedNode(null, null, null, null);
+        NodeDTO updatedNode = TestHelper.createNodeDTO(null);
 
         when(nodeRepository.findById(any())).thenReturn(Optional.of(mock(Node.class)));
 
         // Act
         Exception exception = null;
         try {
-            nodeService.updateNode(updatedNode.getId(), updatedNode);
+            nodeService.updateNode(0L, updatedNode);
+        } catch (Exception e) {
+            exception = e;
+        }
+
+        // Assert
+        assertThat(exception).isNotNull();
+        assertThat(exception).isInstanceOf(ResponseStatusException.class);
+        assertThat(((ResponseStatusException) exception).getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+
+        verify(nodeRepository, never()).save(any());
+    }
+
+    @Test 
+    public void updateNode_parentNotFound() {
+        // Arrange
+        Node root = TestHelper.createNode(0L, null, null, 0);
+        Node parent = TestHelper.createNode(1L, root, root, 1);
+
+        NodeDTO updatedNode = TestHelper.createNodeDTO(null);
+
+        when(nodeRepository.findById(any())).thenReturn(Optional.of(mock(Node.class)));
+
+        // Act
+        Exception exception = null;
+        try {
+            nodeService.updateNode(0L, updatedNode);
         } catch (Exception e) {
             exception = e;
         }

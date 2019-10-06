@@ -39,18 +39,20 @@ Our boss is evil and we can only have docker and docker-compose on our machines.
 `docker-compose up -d`
 
 # Test
+`docker run --rm -v /home/tinus/.gradle:/home/gradle/.gradle -v "$PWD":/home/gradle/project -w /home/gradle/project gradle:5.6.2-jdk12 gradle test`
+
 The two required endpoints are available as:
 ## Get all decendants
 `curl -X GET http://localhost:8080/nodes/<ID_OF_PARENT>/decendants`
 
 ## Change parent
-`curl -X PATCH -H "Content-Type: application/json" -d '{"parent": "http://localhost:8080/nodes/<ID_OF_NEW_PARENT>"}' http://localhost:8080/nodes/{id}`
+`curl -X PATCH -H "Content-Type: application/json" -d '{"parentId": <ID_OF_NEW_PARENT>}' http://localhost:8080/nodes/{id}`
 
 ## Create tree
 To populate the database one can do the following to create a root
 `curl -X POST -H "Content-Type: application/json" -d '{}' http://localhost:8080/nodes`
 and then
-`curl -X POST -H "Content-Type: application/json" -d '{"parent": "http://localhost:8080/nodes/<ID_OF_PARENT>"}' http://localhost:8080/nodes`
+`curl -X POST -H "Content-Type: application/json" -d '{"parentId": <ID_OF_PARENT>}' http://localhost:8080/nodes`
 to add nodes to the tree
 
 ## Extra

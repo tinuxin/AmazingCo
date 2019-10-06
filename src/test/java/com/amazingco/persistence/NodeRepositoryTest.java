@@ -45,13 +45,13 @@ public class NodeRepositoryTest {
         // Use NodeService to create nodes to enforce business rules
         nodeService = new NodeServiceImpl(nodeRepository);
         
-        root = nodeService.createNode(TestHelper.createNode(null));
+        root = nodeService.createNode(TestHelper.createNodeDTO(null));
 
-        parent1 = nodeService.createNode(TestHelper.createNode(root));
-        parent2 = nodeService.createNode(TestHelper.createNode(root));
+        parent1 = nodeService.createNode(TestHelper.createNodeDTO(root.getId()));
+        parent2 = nodeService.createNode(TestHelper.createNodeDTO(root.getId()));
 
-        child1_1 = nodeService.createNode(TestHelper.createNode(parent1));
-        child1_2 = nodeService.createNode(TestHelper.createNode(parent1));
+        child1_1 = nodeService.createNode(TestHelper.createNodeDTO(parent1.getId()));
+        child1_2 = nodeService.createNode(TestHelper.createNodeDTO(parent1.getId()));
     }
 
     @Test

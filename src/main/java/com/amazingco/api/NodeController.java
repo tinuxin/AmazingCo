@@ -64,21 +64,21 @@ public class NodeController {
     }
 
     @PostMapping
-    public @ResponseBody ResponseEntity<?> createNode(@RequestBody Resource<Node> nodeBody) {
+    public @ResponseBody ResponseEntity<?> createNode(@RequestBody Resource<NodeDTO> nodeBody) {
         Node persistedNode = nodeService.createNode(nodeBody.getContent());
 
         return ResponseEntity.ok(toResource(persistedNode));
     }
 
     @PatchMapping("/{nodeId}")
-    public @ResponseBody ResponseEntity<?> updateNode(@PathVariable Long nodeId, @RequestBody Resource<Node> updatedNodeBody) {
+    public @ResponseBody ResponseEntity<?> updateNode(@PathVariable Long nodeId, @RequestBody Resource<NodeDTO> updatedNodeBody) {
         Node updatedNode = nodeService.updateNode(nodeId, updatedNodeBody.getContent());
 
         return ResponseEntity.ok(toResource(updatedNode));
     }
 
-    private Resource<Node> toResource(Node node) {
-        Resource<Node> resource = new Resource<Node>(node);
+    private Resource<NodeDTO> toResource(Node node) {
+        Resource<NodeDTO> resource = new Resource<NodeDTO>(new NodeDTO(node));
         resource.add(entityLinks.linkToSingleResource(Node.class, node.getId()).withSelfRel());
         if (node.getParent() != null) {
             resource.add(entityLinks.linkToSingleResource(Node.class, node.getParent().getId()).withRel("parent"));
@@ -90,10 +90,10 @@ public class NodeController {
         return resource;
     }
 
-    private Resources<Resource<Node>> toResources(Iterable<Node> nodes, Link self) {
-        Collection<Resource<Node>> nodeResources = new ArrayList();
+    private Resources<Resource<NodeDTO>> toResources(Iterable<Node> nodes, Link self) {
+        Collection<Resource<NodeDTO>> nodeResources = new ArrayList();
         nodes.forEach((node) -> nodeResources.add(toResource(node)));
-        Resources<Resource<Node>> resources = new Resources<Resource<Node>>(nodeResources);
+        Resources<Resource<NodeDTO>> resources = new Resources<Resource<NodeDTO>>(nodeResources);
 
         resources.add(self);
 
