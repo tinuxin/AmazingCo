@@ -1,0 +1,23 @@
+version: '3.1'
+
+services:
+  amazingco:
+    image: amazingco
+    environment:
+      SPRING_APPLICATION_JSON: '{"spring.data.neo4j.uri": "bolt://neo4j:7687"}'
+    volumes:
+      - .:/usr/amazingco
+    ports:
+      - 8080:8080 
+    depends_on:
+      - neo4j
+  neo4j:
+    image: neo4j:3.5.3
+    environment:
+      - NEO4J_AUTH=none
+    ports:
+      - 7687:7687
+      - 7474:7474
+    volumes:
+      - ./neo4j/data:/data
+      - ./neo4j/logs:/logs

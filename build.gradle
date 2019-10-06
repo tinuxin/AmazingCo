@@ -5,12 +5,16 @@ plugins {
     id 'io.spring.dependency-management' version "1.0.8.RELEASE"
 }
 
+group = 'com.amazingco'
+sourceCompatibility = '1.12'
+
 repositories {
-    jcenter()
+    mavenCentral()
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-rest'
+    implementation 'org.springframework.boot:spring-boot-starter-data-neo4j'
 
     testImplementation 'junit:junit:4.12'
 }
