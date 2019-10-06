@@ -1,5 +1,7 @@
 package com.amazingco.persistence;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import org.neo4j.ogm.annotation.GeneratedValue;
 import org.neo4j.ogm.annotation.Id;
 import org.neo4j.ogm.annotation.NodeEntity;
@@ -12,8 +14,10 @@ public class Node {
     @GeneratedValue
     private Long id;
     @Relationship(type = "PARENT", direction = "INCOMING")
+    @JsonBackReference
     private Node parent;
     @Relationship(type = "ROOT", direction = "INCOMING")
+    @JsonBackReference
     private Node root;
     private int height;
 
