@@ -1,7 +1,7 @@
 plugins {
     id 'java'
 
-    id 'org.springframework.boot' version "2.1.8.RELEASE"
+    id 'org.springframework.boot' version "2.1.9.RELEASE"
     id 'io.spring.dependency-management' version "1.0.8.RELEASE"
 }
 
@@ -17,4 +17,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-neo4j'
 
     testImplementation 'junit:junit:4.12'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.neo4j:neo4j-ogm-test:3.1.14'
+    testCompile 'org.mockito:mockito-core:2.7.22'
+    testCompile 'org.assertj:assertj-core:3.11.1'
 }
