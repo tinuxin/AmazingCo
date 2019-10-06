@@ -7,9 +7,13 @@ import org.neo4j.ogm.annotation.Relationship;
 
 @NodeEntity
 public class Node {
-    @Id @GeneratedValue
+
+    @Id
+    @GeneratedValue
     private Long id;
+    @Relationship(type = "PARENT", direction = "INCOMING")
     private Node parent;
+    @Relationship(type = "ROOT", direction = "INCOMING")
     private Node root;
     private int height;
 
@@ -24,6 +28,10 @@ public class Node {
         return root;
     }
 
+    public void setRoot(Node root) {
+        this.root = root;
+    }
+
     public Node getParent() {
         return parent;
     }
@@ -32,16 +40,12 @@ public class Node {
         this.parent = parent;
     }
 
+
     public int getHeight() {
         return height;
     }
 
     public void setHeight(int height) {
         this.height = height;
-    }
-
-    @Override
-    public String toString() {
-        return "Node [height=" + height + ", id=" + id + ", parent=" + parent + ", root=" + root + "]";
     }
 }
