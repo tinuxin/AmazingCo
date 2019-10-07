@@ -12,8 +12,15 @@ public class TestHelper {
     private static String TEST_API_ROOT = "http://localhost/nodes/";
 
     public static NodeDTO createNodeDTO(Long parentId) {
+        return createNodeDTO(null, parentId, null, null);
+    }
+
+    public static NodeDTO createNodeDTO(Long id, Long parentId, Long rootId, Integer height) {
         NodeDTO nodeDTO = new NodeDTO();
+        nodeDTO.setId(id);
         nodeDTO.setParentId(parentId);
+        nodeDTO.setRootId(rootId);
+        nodeDTO.setHeight(height);
         return nodeDTO;
     }
 

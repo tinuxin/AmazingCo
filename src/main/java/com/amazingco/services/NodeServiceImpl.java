@@ -1,6 +1,8 @@
 package com.amazingco.services;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import com.amazingco.api.NodeDTO;
 import com.amazingco.persistence.Node;
@@ -19,65 +21,65 @@ public class NodeServiceImpl implements NodeService {
         this.nodeRepository = nodeRepository;
     }
 
-    public Iterable<Node> getAll() {
-        return nodeRepository.findAll();
+    public Iterable<NodeDTO> getAll() {
+        return nodesToDTO(nodeRepository.findAll());
     }
 
-    public List<Node> getAllDecendants(Long nodeId) {
+    public Iterable<NodeDTO> getAllDecendants(Long nodeId) {
         List<Node> decendants = nodeRepository.findAllDecendants(nodeId);
 
-        /*  This is obviously a hack a but I simply cannot figure out how to make neo4j return only the children while also populating the the parent and root relationship.
-            This solution is sub par both in design and in performance as it worst case requires traversing the entire list of nodes to find the parent.
-        */
-        // HACK START
-        if (!decendants.isEmpty()) {
-            Node parent = decendants.stream().filter((n) -> n.getId() == nodeId).findAny().get();
-            decendants.remove(parent);
-            decendants.remove(parent.getParent());
-            decendants.remove(parent.getRoot());
-        }
-        // HACK END
+        removeRelationshipsFromResult(nodeId, decendants);
 
-        return decendants;
+        return nodesToDTO(decendants);
     }
 
-    public Iterable<Node> getByHeight(int height) {
-        return  nodeRepository.findByHeight(height);
+    public Iterable<NodeDTO> getByHeight(int height) {
+        return nodesToDTO(nodeRepository.findByHeight(height));
     }
 
-    public Node getNodeById(Long nodeId) {
-        return nodeRepository.findById(nodeId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    public NodeDTO getNodeById(Long nodeId) {
+        return new NodeDTO(getNodeEntityById(nodeId));
     }
 
-    public Node createNode(NodeDTO nodeDTO) {
+    public NodeDTO createNode(NodeDTO nodeDTO) {
         Node node = new Node();
         if (nodeDTO.getParentId() == null) {
             node.setRoot(node);
         } else {
             try {
-                updateAttributesFromParent(node, getNodeById(nodeDTO.getParentId()));
+                updateAttributesFromParent(node, getNodeEntityById(nodeDTO.getParentId()));
             } catch (ResponseStatusException e) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parent Node with id "+nodeDTO.getParentId()+" not found.");
             }
         }
 
-        return nodeRepository.save(node);
+        return new NodeDTO(nodeRepository.save(node));
     }
 
-    public Node updateNode(Long nodeId, NodeDTO updatedNode) {
-        Node existingNode = getNodeById(nodeId);
+    public NodeDTO updateNode(Long nodeId, NodeDTO updatedNode) {
+        Node existingNode = getNodeEntityById(nodeId);
         
         if (updatedNode.getParentId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parameter 'parent' not found.");
         } else {
             try {
-                updateAttributesFromParent(existingNode, getNodeById(updatedNode.getParentId()));
+                updateAttributesFromParent(existingNode, getNodeEntityById(updatedNode.getParentId()));
             } catch (ResponseStatusException e) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parent Node with id "+updatedNode.getParentId()+" not found.");
             }
         }
 
-        return nodeRepository.save(existingNode);
+        return new NodeDTO(nodeRepository.save(existingNode));
+    }
+
+    private Iterable<NodeDTO> nodesToDTO(Iterable<Node> nodes) {
+        return StreamSupport.stream(nodes.spliterator(), false)
+            .map(NodeDTO::new)
+            .collect(Collectors.toList());
+    }
+
+    private Node getNodeEntityById(Long nodeId) {
+        return nodeRepository.findById(nodeId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
     private void updateAttributesFromParent(Node node, Node parent) {
@@ -86,4 +88,15 @@ public class NodeServiceImpl implements NodeService {
         node.setHeight(parent.getHeight() + 1);
     }
 
+    private void removeRelationshipsFromResult(Long parentId, List<Node> decendants) {
+        /*  This is a bit of a hack a but necessary as Neo4j needs to return parent and root along with the children in order to populate the parent and root relationship.
+            This solution is not optimal as worst case it needs requires traversing the entire list of nodes to find the parent.
+        */
+        if (!decendants.isEmpty()) {
+            Node parent = decendants.stream().filter((n) -> n.getId() == parentId).findAny().get();
+            decendants.remove(parent);
+            decendants.remove(parent.getParent());
+            decendants.remove(parent.getRoot());
+        }
+    }
 }

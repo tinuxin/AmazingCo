@@ -37,60 +37,60 @@ public class NodeController {
 
     @GetMapping
     public @ResponseBody ResponseEntity<?> getAll() {
-        Iterable<Node> nodes = nodeService.getAll();
+        Iterable<NodeDTO> nodes = nodeService.getAll();
 
         return ResponseEntity.ok(toResources(nodes, linkTo(methodOn(NodeController.class).getAll()).withSelfRel()));
     }
 
     @GetMapping("/{nodeId}/decendants")
     public @ResponseBody ResponseEntity<?> getAllDecendants(@PathVariable Long nodeId) {
-        Iterable<Node> nodes = nodeService.getAllDecendants(nodeId);
+        Iterable<NodeDTO> nodes = nodeService.getAllDecendants(nodeId);
 
         return ResponseEntity.ok(toResources(nodes, linkTo(methodOn(NodeController.class).getAllDecendants(nodeId)).withSelfRel()));
     }
 
     @GetMapping("/height/{height}")
     public @ResponseBody ResponseEntity<?> getByHeight(@PathVariable int height) {
-        Iterable<Node> nodes = nodeService.getByHeight(height);
+        Iterable<NodeDTO> nodes = nodeService.getByHeight(height);
 
         return ResponseEntity.ok(toResources(nodes, linkTo(methodOn(NodeController.class).getByHeight(height)).withSelfRel()));
     }
 
     @GetMapping("/{nodeId}")
     public @ResponseBody ResponseEntity<?> getNode(@PathVariable Long nodeId) {
-        Node node = nodeService.getNodeById(nodeId);
+        NodeDTO node = nodeService.getNodeById(nodeId);
 
         return ResponseEntity.ok(toResource(node));
     }
 
     @PostMapping
     public @ResponseBody ResponseEntity<?> createNode(@RequestBody Resource<NodeDTO> nodeBody) {
-        Node persistedNode = nodeService.createNode(nodeBody.getContent());
+        NodeDTO persistedNode = nodeService.createNode(nodeBody.getContent());
 
         return ResponseEntity.ok(toResource(persistedNode));
     }
 
     @PatchMapping("/{nodeId}")
     public @ResponseBody ResponseEntity<?> updateNode(@PathVariable Long nodeId, @RequestBody Resource<NodeDTO> updatedNodeBody) {
-        Node updatedNode = nodeService.updateNode(nodeId, updatedNodeBody.getContent());
+        NodeDTO updatedNode = nodeService.updateNode(nodeId, updatedNodeBody.getContent());
 
         return ResponseEntity.ok(toResource(updatedNode));
     }
 
-    private Resource<NodeDTO> toResource(Node node) {
-        Resource<NodeDTO> resource = new Resource<NodeDTO>(new NodeDTO(node));
+    private Resource<NodeDTO> toResource(NodeDTO node) {
+        Resource<NodeDTO> resource = new Resource<NodeDTO>(node);
         resource.add(entityLinks.linkToSingleResource(Node.class, node.getId()).withSelfRel());
-        if (node.getParent() != null) {
-            resource.add(entityLinks.linkToSingleResource(Node.class, node.getParent().getId()).withRel("parent"));
+        if (node.getParentId() != null) {
+            resource.add(entityLinks.linkToSingleResource(Node.class, node.getParentId()).withRel("parent"));
         }
-        if (node.getRoot() != null) {
-            resource.add(entityLinks.linkToSingleResource(Node.class, node.getRoot().getId()).withRel("root"));
+        if (node.getRootId() != null) {
+            resource.add(entityLinks.linkToSingleResource(Node.class, node.getRootId()).withRel("root"));
         }
 
         return resource;
     }
 
-    private Resources<Resource<NodeDTO>> toResources(Iterable<Node> nodes, Link self) {
+    private Resources<Resource<NodeDTO>> toResources(Iterable<NodeDTO> nodes, Link self) {
         Collection<Resource<NodeDTO>> nodeResources = new ArrayList();
         nodes.forEach((node) -> nodeResources.add(toResource(node)));
         Resources<Resource<NodeDTO>> resources = new Resources<Resource<NodeDTO>>(nodeResources);

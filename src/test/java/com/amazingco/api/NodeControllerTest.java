@@ -16,7 +16,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.Arrays;
 
 import com.amazingco.TestHelper;
-import com.amazingco.persistence.Node;
 import com.amazingco.services.NodeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -66,15 +65,14 @@ public class NodeControllerTest {
     @Test
     public void getAllDecendants() throws Exception {
         // Arrange
-        Node root = TestHelper.createNode(0L, null, null, 0);
-        Node parent = TestHelper.createNode(1L, root, root, 1);
-        Node child1 = TestHelper.createNode(2L, parent, root, 2);
-        Node child2 = TestHelper.createNode(3L, parent, root, 2);
+        Long parentId = 1L;
+        NodeDTO child1 = TestHelper.createNodeDTO(2L, parentId, 0L, 2);
+        NodeDTO child2 = TestHelper.createNodeDTO(3L, parentId, 0L, 2);
 
-        when(nodeService.getAllDecendants(parent.getId())).thenReturn(Arrays.asList(child1, child2));
+        when(nodeService.getAllDecendants(parentId)).thenReturn(Arrays.asList(child1, child2));
 
         // Act
-        ResultActions result = mockMvc.perform(get("/nodes/" + parent.getId() + "/decendants"));
+        ResultActions result = mockMvc.perform(get("/nodes/" + parentId + "/decendants"));
 
         // Assert
         result.andExpect(status().isOk()).andExpect(content().contentType("application/hal+json;charset=UTF-8"))
@@ -82,33 +80,33 @@ public class NodeControllerTest {
         verifyJsonNode(result, child1, "_embedded.nodes[0]");
         verifyJsonNode(result, child2, "_embedded.nodes[1]");
         result.andExpect(
-                jsonPath("_links.self.href", is(TestHelper.buildMockedLink(parent.getId()).getHref() + "/decendants")));
+                jsonPath("_links.self.href", is(TestHelper.buildMockedLink(parentId).getHref() + "/decendants")));
     }
 
     @Test
     public void getAllDecendants_noDecendants() throws Exception {
         // Arrange
-        Node root = TestHelper.createNode(0L, null, null, 0);
-        Node parent = TestHelper.createNode(1L, root, root, 1);
+        Long parentId = 1L;
+        NodeDTO child2 = TestHelper.createNodeDTO(3L, parentId, parentId, 1);
 
-        when(nodeService.getAllDecendants(parent.getId())).thenReturn(Lists.emptyList());
+        when(nodeService.getAllDecendants(parentId)).thenReturn(Lists.emptyList());
 
         // Act
-        ResultActions result = mockMvc.perform(get("/nodes/" + parent.getId() + "/decendants"));
+        ResultActions result = mockMvc.perform(get("/nodes/" + parentId + "/decendants"));
 
         // Assert
         result.andExpect(status().isOk()).andExpect(content().contentType("application/hal+json;charset=UTF-8"))
                 .andExpect(jsonPath("_embedded").doesNotExist());
         result.andExpect(
-                jsonPath("_links.self.href", is(TestHelper.buildMockedLink(parent.getId()).getHref() + "/decendants")));
+                jsonPath("_links.self.href", is(TestHelper.buildMockedLink(parentId).getHref() + "/decendants")));
     }
 
     @Test
     public void updateNode() throws Exception {
         // Arrange
-        Node root = TestHelper.createNode(0L, null, null, 0);
-        Node parent = TestHelper.createNode(1L, root, root, 1);
-        Node updatedNode = TestHelper.createNode(2L, parent, null, null);
+        Long id = 2l;
+        NodeDTO updateNode = TestHelper.createNodeDTO(null, 0L, null, null);
+        NodeDTO updatedNode = TestHelper.createNodeDTO(2L, 1L, 0L, 2);
 
         when(nodeService.updateNode(eq(updatedNode.getId()), any())).thenReturn(updatedNode);
 
@@ -116,11 +114,10 @@ public class NodeControllerTest {
 
         // Act
         ResultActions result = mockMvc.perform(
-                patch("/nodes/" + updatedNode.getId())
-                .content(objectMapper.writeValueAsString(TestHelper.createNodeDTO(parent.getId())))
+                patch("/nodes/" + id)
+                .content(objectMapper.writeValueAsString(updateNode))
                 .accept("application/hal+json;charset=UTF-8")
                 .contentType("application/hal+json;charset=UTF-8"));
-                // .characterEncoding("utf-8")
 
         // Assert
         result.andExpect(status().isOk()).andExpect(content().contentType("application/hal+json;charset=UTF-8"));
@@ -131,54 +128,35 @@ public class NodeControllerTest {
     @Test
     public void updateNode_parentNotFound() throws Exception {
         // Arrange
-        Node root = TestHelper.createNode(0L, null, null, 0);
-        Node parent = TestHelper.createNode(1L, root, root, 1);
-        Node updatedNode = TestHelper.createNode(2L, parent, null, null);
+        Long id = 2l;
+        NodeDTO updateNode = TestHelper.createNodeDTO(null, 0L, null, null);
+        NodeDTO updatedNode = TestHelper.createNodeDTO(2L, 1L, 0L, 2);
 
-        when(nodeService.updateNode(eq(updatedNode.getId()), any())).thenThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST));
+        when(nodeService.updateNode(any(), any())).thenThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST));
 
         ObjectMapper objectMapper = new ObjectMapper();
 
         // Act
         ResultActions result = mockMvc.perform(
-                patch("/nodes/" + updatedNode.getId())
-                .content(objectMapper.writeValueAsString(TestHelper.createNodeDTO(parent.getId())))
+                patch("/nodes/" + id)
+                .content(objectMapper.writeValueAsString(updateNode))
                 .accept("application/hal+json;charset=UTF-8")
                 .contentType("application/hal+json;charset=UTF-8"));
-                // .characterEncoding("utf-8")
 
         // Assert
         result.andExpect(status().is(400));
     }
 
-    private ResultActions verifyJsonNode(ResultActions result, Node node, String path) throws Exception {
+    private ResultActions verifyJsonNode(ResultActions result, NodeDTO node, String path) throws Exception {
         return result
+                .andExpect(jsonPath(path + ".id", is(node.getId().intValue())))
                 .andExpect(jsonPath(path + ".height", is(node.getHeight())))
-                .andExpect(jsonPath(path + ".parentId", is(node.getParent().getId().intValue())))
-                .andExpect(jsonPath(path + ".rootId", is(node.getRoot().getId().intValue())))
+                .andExpect(jsonPath(path + ".parentId", is(node.getParentId().intValue())))
+                .andExpect(jsonPath(path + ".rootId", is(node.getRootId().intValue())))
                 .andExpect(jsonPath(path + "._links.self.href", is(TestHelper.buildMockedLink(node.getId()).getHref())))
                 .andExpect(jsonPath(path + "._links.parent.href",
-                        is(TestHelper.buildMockedLink(node.getParent().getId()).getHref())))
+                        is(TestHelper.buildMockedLink(node.getParentId()).getHref())))
                 .andExpect(jsonPath(path + "._links.root.href",
-                        is(TestHelper.buildMockedLink(node.getRoot().getId()).getHref())));
+                        is(TestHelper.buildMockedLink(node.getRootId()).getHref())));
     }
-
-    private class NodeBody {
-        private Node parent;
-
-        public NodeBody(Node parent) {
-            this.parent = parent;
-        }
-
-        public Node getParent() {
-            return parent;
-        }
-
-        public String toJson() throws Exception {
-            ObjectMapper objectMapper = new ObjectMapper();
-            System.out.println("HALLULJA: "+objectMapper.writeValueAsString(this));
-            return objectMapper.writeValueAsString(this);
-        }
-    }
-
 }

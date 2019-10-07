@@ -8,7 +8,7 @@ public class NodeDTO {
     private Long id;
     private Long parentId;
     private Long rootId;
-    private int height;
+    private Integer height;
 
     public NodeDTO() {
     }
@@ -50,11 +50,11 @@ public class NodeDTO {
 		this.rootId = rootId;
 	}
 
-	public int getHeight() {
+	public Integer getHeight() {
 		return height;
 	}
 
-	public void setHeight(int height) {
+	public void setHeight(Integer height) {
 		this.height = height;
 	}
 }
