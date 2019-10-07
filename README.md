@@ -39,7 +39,7 @@ Our boss is evil and we can only have docker and docker-compose on our machines.
 `docker-compose up -d`
 
 # Test
-`docker run --rm -v /home/tinus/.gradle:/home/gradle/.gradle -v "$PWD":/home/gradle/project -w /home/gradle/project gradle:5.6.2-jdk12 gradle test`
+`docker run --rm -v "$PWD":/home/gradle/project -w /home/gradle/project gradle:5.6.2-jdk12 gradle test`
 
 The two required endpoints are available as:
 ## Get all decendants
