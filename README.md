@@ -3,7 +3,7 @@
 # The challenge
 We in Amazing Co need to model how our company is structured so we can do awesome stuff.
 
-We have a root node (only one) and several children nodes, each one with its own children as well. It's a tree-based structure. Something like:     
+We have a root node and several children nodes, each one with its own children as well. It's a tree-based structure. Something like:     
 
 
 We need two HTTP APIs that will serve the two basic operations:
@@ -65,7 +65,5 @@ To get specific node
 To get all nodes of a specific height
 `curl -X GET http://localhost:8080/nodes/height/<HEIGHT>`
 
-# Bad excuses
-I did not have time to finish the NodeControllerTest. I would have liked to have tested all the endpoints but the foundation for the rest of the tests is in place.
-
-After I finished code I realized that I have probably misunderstood one of the requirements. As you can see from the code I understood _1) Get all children nodes of a given node (the given node can be anyone in the tree structure)._ as _Get all decendants of a parent_. My interpretation unfortunately led me towards a much more complex solution in order to maintain proper performance. The reason I decided to go with Neo4j was in entirely to support this requirement without doing recursive queries to the db. To just get the direct children I would have just used a relational database and stored the parent_id for every node. A simple query for Nodes with a specific parent_id would return all children. Switching parent would have been as easy as changing the parent_id.
+## TODO
+I would have liked to have tested all the endpoints in NodeControllerTest but the foundation for the rest of the tests is in place.
