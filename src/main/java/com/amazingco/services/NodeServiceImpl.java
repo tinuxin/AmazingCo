@@ -89,9 +89,6 @@ public class NodeServiceImpl implements NodeService {
     }
 
     private void removeRelationshipsFromResult(Long parentId, List<Node> decendants) {
-        /*  This is a bit of a hack a but necessary as Neo4j needs to return parent and root along with the children in order to populate the parent and root relationship.
-            This solution is not optimal as worst case it needs requires traversing the entire list of nodes to find the parent.
-        */
         if (!decendants.isEmpty()) {
             Node parent = decendants.stream().filter((n) -> n.getId() == parentId).findAny().get();
             decendants.remove(parent);
