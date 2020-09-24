@@ -102,6 +102,28 @@ public class NodeControllerTest {
     }
 
     @Test
+    public void createNode() throws Exception {
+        // Arrange
+        NodeDTO node = TestHelper.createNodeDTO(2L, 1L, 0L, 2);
+
+        when(nodeService.createNode(any())).thenReturn(node);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        // Act
+        ResultActions result = mockMvc.perform(
+                post("/nodes/")
+                .content(objectMapper.writeValueAsString(node))
+                .accept("application/hal+json;charset=UTF-8")
+                .contentType("application/hal+json;charset=UTF-8"));
+
+        // Assert
+        result.andExpect(status().isOk()).andExpect(content().contentType("application/hal+json;charset=UTF-8"));
+        verifyJsonNode(result, node, "$");
+        result.andExpect(jsonPath("_links.self.href").exists());
+    }
+
+    @Test
     public void updateNode() throws Exception {
         // Arrange
         Long id = 2l;
