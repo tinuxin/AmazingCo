@@ -44,6 +44,9 @@ public class NodeServiceImpl implements NodeService {
     public NodeDTO createNode(NodeDTO nodeDTO) {
         Node node = new Node();
         if (nodeDTO.getParentId() == null) {
+            if (!isGraphEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Multiple root nodes not allowed");
+            }
             node.setRoot(node);
         } else {
             try {
@@ -72,6 +75,10 @@ public class NodeServiceImpl implements NodeService {
         return new NodeDTO(nodeRepository.save(existingNode));
     }
 
+    private boolean isGraphEmpty() {
+        return nodeRepository.getGraphSize() == 0;
+    }
+
     private Iterable<NodeDTO> nodesToDTO(Iterable<Node> nodes) {
         return StreamSupport.stream(nodes.spliterator(), false)
             .map(NodeDTO::new)
@@ -89,6 +96,9 @@ public class NodeServiceImpl implements NodeService {
     }
 
     private void removeRelationshipsFromResult(Long parentId, List<Node> decendants) {
+        /*  This is necessary as Neo4j needs to return parent and root along with the children in order to populate the parent and root relationship
+            so we need to remove these to return the correct result.
+        */
         if (!decendants.isEmpty()) {
             Node parent = decendants.stream().filter((n) -> n.getId() == parentId).findAny().get();
             decendants.remove(parent);

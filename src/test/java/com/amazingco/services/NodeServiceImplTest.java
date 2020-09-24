@@ -146,6 +146,28 @@ public class NodeServiceImplTest {
     }
 
     @Test
+    public void createNode_multipleRoots() {
+        // Arrange
+        NodeDTO newNode = TestHelper.createNodeDTO(null);
+
+        when(nodeRepository.getGraphSize()).thenReturn(1);
+
+        Exception exception = null;
+
+        // Act
+        try {
+            nodeService.createNode(newNode);
+        } catch (Exception e) {
+            exception = e;
+        }
+
+        // Assert
+        assertThat(exception).isNotNull();
+        assertThat(exception).isInstanceOf(ResponseStatusException.class);
+        assertThat(((ResponseStatusException) exception).getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     public void updateNode_newParent() {
         // Arrange
         Node root = TestHelper.createNode(0L, null, null, 0);

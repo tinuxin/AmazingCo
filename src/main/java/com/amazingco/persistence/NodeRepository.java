@@ -13,4 +13,7 @@ public interface NodeRepository extends CrudRepository<Node, Long> {
     List<Node> findAllDecendants(@Param("parentId") Long parentId);
 
     Set<Node> findByHeight(int height);
+
+    @Query("MATCH (n) RETURN count(*)")
+    int getGraphSize();
 }

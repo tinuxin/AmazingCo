@@ -39,11 +39,10 @@ public class NodeRepositoryTest {
     private NodeDTO parent2;
     private NodeDTO child1_1;
     private NodeDTO child1_2;
-    private NodeDTO child2_1;
     
     @Before
     public void setup() {
-        // Use NodeService to create nodes to enforce business rules
+        // Use NodeService to create nodes to enforce business logic
         nodeService = new NodeServiceImpl(nodeRepository);
         
         root = nodeService.createNode(TestHelper.createNodeDTO(null));
@@ -132,5 +131,16 @@ public class NodeRepositoryTest {
 
         //Assert
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    public void getGraphSize() {
+        // Arrange
+
+        // Act
+        int result = nodeRepository.getGraphSize();
+
+        //Assert
+        assertThat(result).isEqualTo(5);
     }
 }
